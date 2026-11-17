@@ -1,0 +1,153 @@
+<div class="container py-4" style="max-width: 960px;">
+  <h1 class="h3 mb-3">Комбіноване шифрування: Цезар + Частокіл</h1>
+
+  <div class="d-flex flex-column gap-3">
+    <section class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold">
+        Вхідні дані
+      </div>
+      <div class="card-body">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <div class="btn-group w-100 mb-3" role="group" aria-label="Операція">
+            <button
+              type="button"
+              class="btn"
+              [class.btn-primary]="form.controls.operation.value === 'Encrypt'"
+              [class.btn-outline-primary]="form.controls.operation.value !== 'Encrypt'"
+              (click)="setOperation('Encrypt')"
+            >
+              Шифрування
+            </button>
+            <button
+              type="button"
+              class="btn"
+              [class.btn-primary]="form.controls.operation.value === 'Decrypt'"
+              [class.btn-outline-primary]="form.controls.operation.value !== 'Decrypt'"
+              (click)="setOperation('Decrypt')"
+            >
+              Дешифрування
+            </button>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="inputText" class="form-label fw-semibold">
+                {{ form.controls.operation.value === 'Encrypt' ? 'Відкритий текст' : 'Шифротекст' }}
+              </label>
+              <textarea
+                id="inputText"
+                rows="2"
+                class="form-control font-mono"
+                formControlName="text"
+                [class.is-invalid]="hasError('text')"
+              ></textarea>
+              @if (hasError('text')) {
+                <div class="invalid-feedback">
+                  {{
+                    hasDecryptLengthError()
+                      ? 'Для дешифрування потрібно щонайменше 2 символи (префікс IV та дані).'
+                      : 'Текст не може бути порожнім.'
+                  }}
+                </div>
+              }
+            </div>
+
+            <div class="col-md-6">
+              <label for="shiftInput" class="form-label fw-semibold">Зсув Цезаря (k)</label>
+              <input
+                id="shiftInput"
+                type="number"
+                step="1"
+                class="form-control"
+                formControlName="shift"
+                [class.is-invalid]="hasError('shift')"
+              />
+              @if (hasError('shift')) {
+                <div class="invalid-feedback">Зсув k повинен бути цілим числом.</div>
+              }
+            </div>
+
+            <div class="col-md-6">
+              <label for="railsInput" class="form-label fw-semibold">Кількість рейок (N &ge; 2)</label>
+              <input
+                id="railsInput"
+                type="number"
+                step="1"
+                min="2"
+                max="100"
+                class="form-control"
+                formControlName="rails"
+                [class.is-invalid]="hasError('rails')"
+              />
+              @if (hasError('rails')) {
+                <div class="invalid-feedback">Кількість рейок N повинна бути від 2 до 100.</div>
+              }
+            </div>
+          </div>
+
+          @if (apiError()) {
+            <div class="alert alert-danger mt-3 mb-0" role="alert">
+              {{ apiError() }}
+            </div>
+          }
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading()">
+              {{ isLoading() ? 'Обробка...' : 'Виконати' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    @if (response(); as res) {
+      <section class="card shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+          Результат ({{ res.operation === 'Encrypt' ? 'Шифрування' : 'Дешифрування' }})
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 p-2 bg-light border rounded">
+            <div class="font-mono fw-bold fs-5 text-break">{{ res.resultText }}</div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyResult()">
+              {{ copied() ? 'Скопійовано!' : 'Копіювати' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      @if (res.operation === 'Encrypt') {
+        <app-caesar-table
+          [stepNumber]="1"
+          [shift]="res.shift"
+          [isEncrypt]="true"
+          [steps]="res.caesarSteps"
+          [outputText]="res.intermediateText"
+        />
+        <section class="card shadow-sm">
+          <div class="card-header bg-white fw-semibold">
+            Етап 2: Алгоритм Частоколу (Шифрування, рейок N = {{ res.rails }})
+          </div>
+          <div class="card-body small">
+            <div>Вхід: <code class="text-dark">{{ res.intermediateText }}</code></div>
+            <div class="mt-1">Вихід: <code class="text-primary fw-bold">{{ res.resultText }}</code></div>
+          </div>
+        </section>
+      } @else {
+        <section class="card shadow-sm">
+          <div class="card-header bg-white fw-semibold">
+            Етап 1: Алгоритм Частоколу (Дешифрування, рейок N = {{ res.rails }})
+          </div>
+          <div class="card-body small">
+            <div>Проміжний текст: <code class="text-primary fw-bold">{{ res.intermediateText }}</code></div>
+          </div>
+        </section>
+        <app-caesar-table
+          [stepNumber]="2"
+          [shift]="res.shift"
+          [isEncrypt]="false"
+          [steps]="res.caesarSteps"
+        />
+      }
+    }
+  </div>
+</div>

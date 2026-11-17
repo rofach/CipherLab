@@ -1,0 +1,6 @@
+@CipherLab.Api_HostAddress = http://localhost:5045
+
+GET {{CipherLab.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

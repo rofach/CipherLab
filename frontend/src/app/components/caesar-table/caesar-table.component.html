@@ -1,0 +1,35 @@
+<section class="card shadow-sm">
+  <div class="card-header bg-white fw-semibold">
+    Етап {{ stepNumber() }}: Алгоритм Цезаря ({{ isEncrypt() ? 'Шифрування' : 'Дешифрування' }}, зсув k = {{ shift() }})
+  </div>
+  @if (outputText(); as result) {
+    <div class="px-3 py-2 border-bottom bg-light small">
+      <span class="text-muted">Проміжний текст:</span>
+      <code class="text-dark ms-1 fw-semibold">{{ result }}</code>
+    </div>
+  }
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Вхід</th>
+            <th>Обчислення</th>
+            <th>Вихід</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (step of steps(); track step.index) {
+            <tr>
+              <td class="text-muted">{{ step.index < 0 ? 'IV' : step.index }}</td>
+              <td class="font-mono fw-semibold">{{ displayChar(step.inputChar) }}</td>
+              <td class="font-mono small">{{ step.formula }}</td>
+              <td class="font-mono fw-bold text-primary">{{ displayChar(step.outputChar) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
